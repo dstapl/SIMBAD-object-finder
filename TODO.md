@@ -15,3 +15,9 @@
       - [ ] Angle lines (curved lines extending from specific axis)
         - [ ] RA and Declination of star
         - [ ] Azimuth and Altitude
+- [ ] Display stars as points on hemisphere
+  - [ ] selecting star from table will highlight point on hemisphere
+  - [ ] reduce rendering cost of hundreds of table entries
+    - [ ] merge points with similar sky location into single larger point
+      - [ ] ability to select large point and zoom in 
+       - [ ] ditto recursively until no more large points
