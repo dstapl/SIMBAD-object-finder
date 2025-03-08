@@ -1,8 +1,10 @@
 #pragma once
+#include <map> 
+#include <string>
 
 namespace constants {
 	namespace xml {
-		const char* name_list[] = { // Names
+		const std::string name_list[] = { // Names
 			"MAIN_ID",
 			"OTYPE_S",
 
@@ -42,6 +44,24 @@ namespace constants {
 			// //"NB_REF"
 			"OID4", // Identifier for SIMBAD
 		};
+
+		// TODO: value type
+		// TODO: keys for RapidXML parser may not be the same as Julia
+		const std::map<std::string, std::string> type_map{
+			{"boolean", "bool"},
+			{"unsignedByte", "uint8_t"},
+			{"short", "int16_t"},
+			{"int", "int32_t"},
+			{"long", "int64_t"},
+			{"float", "float"}, // 32-bit
+			{"double", "double"}, // 64-bit
+			{"floatComplex", ""}, // 32-bit
+			{"doubleComplex", ""}, //64-bit
+			{"char", "uint8_t"},
+			{"unichodeChar", "char"},
+		};
+		
+		// TODO: Implement RapidXML functions
 	}
 	namespace astro {
 		// 12:00 Noon 1st Jan 2000
@@ -416,9 +436,9 @@ namespace constants {
 			-3,0,0,0,          // 2 3 4
 			-3,0,0,0,          // 2 3 4
 		};
-
+#
 		// See https://en.wikipedia.org/wiki/%CE%94T_(timekeeping)
-		const double deltaT = 69.3752;
+		extern const double deltaT = 69.3752;
 
 	}
 }

@@ -16,10 +16,14 @@ int main() {
 	std::cout << "day: " << std::endl;
 	std::cin >> day;
 
-	double birthday = JD(year, month, day);
+	double birthday = date::JD(year, month, day);
 
 	std::cout << "Your *JULIAN* birthday is: ";
 	std::printf("%.2f", birthday);
 	std::cout << std::endl;
+
+	std::tuple<int, int> y = { 1,2 };
+	std::cout << algorithms::astro_helper::between2((int)2, y, true);
+	
 	return EXIT_SUCCESS;
 }
