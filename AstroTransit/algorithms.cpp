@@ -1,11 +1,16 @@
 #include <cstdint>
+#define _USE_MATH_DEFINES
 #include <cmath>
 
 #include <utility>
 #include <tuple>
 #include <functional>
 
+#include <stdexcept>
+
 #include "constants.h"
+
+// TODO: How to get DMS type without reincluding the header file?
 #include "algorithms.h"
 
 namespace algorithms {
@@ -100,19 +105,20 @@ namespace algorithms {
 		}
 
 		std::tuple<double, double> correct_coordinates(double jd, double ra, double dec, double pm_ra, double pm_dec) {
-			double delta_pm_ra, delta_pm_dec;
-			std::tie(delta_pm_ra, delta_pm_dec) = proper_motion(jd, pm_ra, pm_dec);
-			
+			auto const& [delta_pm_ra, delta_pm_dec] = proper_motion(jd, pm_ra, pm_dec);
+
 			double delta_ra = 0, delta_dec = 0;
 			// TODO: Include effects of solar precession
 			// Otherwise can remove delta_ra/dec values as 0
 
-			double eps_ra = delta_ra + delta_pm_ra;
-			double eps_dec = delta_dec + delta_pm_dec;
+			const double eps_ra = delta_ra + delta_pm_ra;
+			const double eps_dec = delta_dec + delta_pm_dec;
 
 			return { quadrant_ra(ra + eps_ra), quadrant_dec(dec + eps_dec) };
 		};
 
+		// TODO: Does this assume that the lat is in [0, 360) or [-180, 180)?
+		// Similar question for dec?
 		double coaltitude(double lat, double dec) {
 			return 90.0 - (lat - dec);
 		}
@@ -129,7 +135,7 @@ namespace algorithms {
 			*/
 
 			int sign = (delta > -90) * 1 - (delta <= -90) * -1;
-			double alt = 90.0 + delta * sign;
+			double alt = 90.0 + sign * delta;
 			bool north = alt > 90;
 			
 			// Wrap into [-90, 90]
@@ -166,10 +172,113 @@ namespace algorithms {
 			return deg + (min / 60.0) + sec / 3600.0;
 		}
 		double dms_to_deg(dms_type dms) {
-			return dms_to_deg(std::get<0>(dms), std::get<1>(dms), std::get<2>(dms));
-			//return std::apply(deg_to_dms, dms);
+			auto const& [deg, min, sec] = dms;
+			return dms_to_deg(deg, min, sec);
+		}
+		
+		uint32_t hours_to_deg(uint32_t hour, uint32_t min, double sec) {
+			// 15 degrees / hour
+			return static_cast<uint32_t>(dms_to_deg(hour * 15, min, sec));
 		}
 
-		
+		uint32_t hours_to_deg(dms_type dms) {
+			auto const& [hour, min, sec] = dms;
+			return hours_to_deg(hour, min, sec);
+		}
+
+		std::string dms_to_string(dms_type dms, AngleFormat format) {
+			// TODO: Better name than `big_unit`
+			auto& [big_unit, min, sec] = dms;
+
+			// Round sec to 3 decimal places
+			// NOTE: This is an approximation
+			sec = std::round(sec * 1000.0) / 1000.0;
+
+			// Define string unit characters
+			const char* big_unit_str;
+			const char* min_str;
+			const char* sec_str;
+
+			switch (format) {
+				case AngleFormat::DMS:
+					big_unit_str = "°";
+					min_str = "'";
+					sec_str = "\"";
+					break;
+				case AngleFormat::Hours:
+					big_unit_str = "h";
+					min_str = "m";
+					sec_str = "s";
+					break;
+				default:
+					throw std::invalid_argument("Invalid angle format specified");
+			};
+
+			// Convert to string based on format
+			std::string result = std::to_string(big_unit) + big_unit_str + " " +
+				std::to_string(min) + min_str + " " +
+				std::to_string(sec) + sec_str;
+
+			return result;
+		}
+
+
+	}
+
+	namespace astro_algorithms {
+		// TODO: Put these in the header file?
+
+		static double rad2deg(double rad) {
+			// Convert radians to degrees
+			return rad * (180.0 / M_PI);
+		}
+
+		static double deg2rad(double deg) {
+			// Convert degrees to radians
+			return deg * (M_PI / 180.0);
+		}
+
+		static double arcsec2rad(double arcsec) {
+			// Convert arcseconds to radians
+			// Good approximation
+			return arcsec * (M_PI / 206265);
+		}
+
+		double L(double jd) {
+			return fmod(
+				rad2deg(
+					constants::astro::constructValue(
+						constants::astro::L_values,
+						jd
+					)
+				),
+				360.0
+			);
+		}
+
+		double B(double jd) {
+			return rad2deg(
+				constants::astro::constructValue(
+					constants::astro::B_values,
+					jd
+				)
+			);
+		}
+
+		double R(double jd) {
+			return constants::astro::constructValue(
+				constants::astro::R_values,
+				jd
+			);
+		}
+
+		double theta(double jd) {
+			return fmod(
+				L(jd) + 180.0,
+				360.0
+			);
+		}
+
+
 	}
 }

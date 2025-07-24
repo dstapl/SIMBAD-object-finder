@@ -1,6 +1,7 @@
 #pragma once
 #include <map> 
 #include <string>
+#include <numeric>
 
 namespace constants {
 	namespace xml {
@@ -63,6 +64,7 @@ namespace constants {
 		
 		// TODO: Implement RapidXML functions
 	}
+	
 	namespace astro {
 		// 12:00 Noon 1st Jan 2000
 		const double J2000 = 2451545;
@@ -436,9 +438,67 @@ namespace constants {
 			-3,0,0,0,          // 2 3 4
 			-3,0,0,0,          // 2 3 4
 		};
-#
+
+		/*# function constructValue(T::Vector{ Matrix{Float64} }, jd::Float64)
+			# 	curr_JME = JME(jd)
+
+			# 	T_length::UInt8 = size(T, 2)
+			# 	T_builder = [Vector{ Float64 }(undef, 5) for _ in 0:T_length]
+
+			# 	for n in 1:(T_length + 1) # 0:5 -> 1 : 6
+			#		# T[n][i] = A[n][i] * cos(B[n][i] + C[n][i] * curr_JME)
+			# 		A = view(T[n], :, 2)
+			# 		display(typeof(A))
+			# 		B = view(T[n], :, 3)
+			# 		C = view(T[n], :, 4)
+			# 		T_builder[n] = map((a, b, c) -> (a * cos(b + c * curr_JME)), A, B, C)
+			# 	end
+
+			# 	T_sums = map(sum, T_builder)
+			# 	T = 10 ^ -8 * (@evalpoly curr_JME T_sums...)
+			# end*/
+
+		// Helper function to extract a column from a 2D array
+		template <size_t M>
+		void get_column(const double(&row)[M][4], size_t col_idx, double* out) {
+			for (size_t i = 0; i < M; ++i) {
+				out[i] = row[i][col_idx];
+			}
+		}
+
+        // Constructs the final values given the set of values
+        // NOTE: Only used for R_values, L_values, and B_values
+        template <size_t N, size_t M>
+		double constructValue(const double(&T)[N][M][4], double jd) {
+			// Don't need the entire algorithms.cpp file here...
+			double curr_JME = (jd - J2000) / 36525.0;
+			double T_sums[N] = { 0.0 };
+			for (size_t n = 0; n < N; ++n) {
+				for (size_t i = 0; i < M; ++i) {
+					double A[M], B[M], C[M];
+					get_column(T[n], 1, A); // 2nd col
+					get_column(T[n], 2, B);
+					get_column(T[n], 3, C);
+
+					// Apply cos to each B[i] + C[i] * curr_JME
+					double cos_B_C[M];
+					for (size_t i = 0; i < M; ++i) {
+						cos_B_C[i] = std::cos(B[i] + C[i] * curr_JME);
+					}
+
+					// Cast to vectors
+					std::vector<double> A_vec(A, A + M);
+					std::vector<double> cos_B_C_vec(cos_B_C, cos_B_C + M);
+
+					T_sums[n] += std::inner_product(A_vec.begin(), A_vec.end(),
+						cos_B_C_vec.begin(), 0.0);
+				}
+			}
+			// Uncomment the return statement to complete the function
+			return std::pow(10, -8) * std::accumulate(T_sums, T_sums + N, 0.0);
+		}
+
 		// See https://en.wikipedia.org/wiki/%CE%94T_(timekeeping)
 		extern const double deltaT = 69.3752;
-
 	}
 }
