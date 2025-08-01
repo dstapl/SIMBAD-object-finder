@@ -107,6 +107,13 @@
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
+      <AdditionalIncludeDirectories>$(SolutionDir)Include\rapidxml-1.13</AdditionalIncludeDirectories>
+      <AdditionalHeaderUnitDependencies>
+      </AdditionalHeaderUnitDependencies>
+      <ScanSourceForModuleDependencies>
+      </ScanSourceForModuleDependencies>
+      <TranslateIncludes>
+      </TranslateIncludes>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -122,6 +129,13 @@
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
+      <AdditionalIncludeDirectories>$(SolutionDir)Include\rapidxml-1.13</AdditionalIncludeDirectories>
+      <AdditionalHeaderUnitDependencies>
+      </AdditionalHeaderUnitDependencies>
+      <ScanSourceForModuleDependencies>
+      </ScanSourceForModuleDependencies>
+      <TranslateIncludes>
+      </TranslateIncludes>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -131,12 +145,19 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="astro_helpers.cpp" />
+    <ClCompile Include="file_reading.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="algorithms.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="astro_helpers.h" />
     <ClInclude Include="constants.h" />
     <ClInclude Include="algorithms.h" />
+    <ClInclude Include="file_reading.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="cpp.hint" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

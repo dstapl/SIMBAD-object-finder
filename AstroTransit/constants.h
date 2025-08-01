@@ -2,6 +2,7 @@
 #include <map> 
 #include <string>
 #include <numeric>
+#include <vector>
 
 namespace constants {
 	namespace xml {
@@ -499,6 +500,6 @@ namespace constants {
 		}
 
 		// See https://en.wikipedia.org/wiki/%CE%94T_(timekeeping)
-		extern const double deltaT = 69.3752;
+		inline extern const double deltaT = 69.3752;
 	}
 }

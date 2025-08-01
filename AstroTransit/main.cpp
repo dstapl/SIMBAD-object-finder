@@ -1,29 +1,21 @@
+#include "astro_helpers.h"
+#include "algorithms.h" // Include the implementation file for algorithms
+
+#include "file_reading.h"
+
 #include <iostream>
 #include <cstdio>
-#include "algorithms.h"
 
+#include <filesystem>
 int main() {
-	using namespace algorithms;
+	std::string filename = "../Data/simbad_all_CV_and_DN.xml";
 
-	int year;
-	int month;
-	int day;
+	VOTable votable = VOTable();
+	if (votable.load(filename) == 1) {
+		return 1;
+	};
 
-	std::cout << "Enter birth year: " << std::endl;
-	std::cin >> year;
-	std::cout << "month: " << std::endl;
-	std::cin >> month;
-	std::cout << "day: " << std::endl;
-	std::cin >> day;
+	votable.printTable();
 
-	double birthday = date::JD(year, month, day);
-
-	std::cout << "Your *JULIAN* birthday is: ";
-	std::printf("%.2f", birthday);
-	std::cout << std::endl;
-
-	std::tuple<int, int> y = { 1,2 };
-	std::cout << algorithms::astro_helper::between2((int)2, y, true);
-	
-	return EXIT_SUCCESS;
+	return 0;
 }
