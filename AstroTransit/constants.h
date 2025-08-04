@@ -1,4 +1,7 @@
+#ifndef _ASTROCONSTANTS_
+#define _ASTROCONSTANTS_
 #pragma once
+
 #include <map> 
 #include <string>
 #include <numeric>
@@ -6,7 +9,9 @@
 
 namespace constants {
 	namespace xml {
-		const std::string name_list[] = { // Names
+		// Names to display to user
+		// Can effectively discard any from the program that isn't listed here
+		const std::string name_list[] = {
 			"MAIN_ID",
 			"OTYPE_S",
 
@@ -503,3 +508,5 @@ namespace constants {
 		inline extern const double deltaT = 69.3752;
 	}
 }
+
+#endif

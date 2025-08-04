@@ -1,4 +1,7 @@
+#ifndef _FILEREADING_
+#define _FILEREADING_
 #pragma once
+
 // TODO: Are these all really necessary...?
 #include <string>
 #include <vector>
@@ -271,60 +274,83 @@ static const std::unordered_map<std::string, FieldType> FIELD_TYPE_MAP = {
 };
 
 
+
 // Field definitions from SIMBAD XML files.
 class Row {
 public:
     std::unordered_map<std::string, std::string> fields;
 
+    Row(rapidxml::xml_node<>* tablerow);
+
     // Variant to hold any supported type
     using FieldValue = std::variant<std::string, int, double, float>;
+    
+    const std::string* getRawValue(const std::string& key) const {
+        static std::string empty;
+        auto pair = fields.find(key);
+        if (pair == fields.end())
+            return nullptr;
+        return &(pair->second);
+    }
 
-    std::optional<FieldValue> getFieldValue(const std::string& key) const {
-        auto it = fields.find(key);
-        if (it == fields.end() || it->second.empty())
+    template <typename T>
+    std::optional<T> getFieldValue(const std::string& key) const {
+        const auto pair = fields.find(key);
+        if (pair == fields.end() || pair->second.empty())
             return std::nullopt;
+        const auto& value = pair->second; // Must be after if-statement in case field.end()
 
-        auto typeIt = FIELD_TYPE_MAP.find(key);
-        if (typeIt == FIELD_TYPE_MAP.end())
-            return it->second; // Default to string if type unknown
+        // Find actual type from variant or default to string
+        auto typeval = FIELD_TYPE_MAP.find(key);
+        const FieldType type = (typeval != FIELD_TYPE_MAP.end())
+            ? typeval->second
+            : FieldType::Char;
 
+        // Check if template type matches the enum variant for this value
         try {
-            switch (typeIt->second) {
-            case FieldType::Char: // String
+            switch (type) {
             case FieldType::Float:
-                return std::stof(it->second);
+                if constexpr (std::is_same_v<T, float>) return std::stof(value);
+                break;
             case FieldType::Int:
-                return std::stoi(it->second);
+                if constexpr (std::is_same_v<T, int>) return std::stoi(value);
+                break;
             case FieldType::Double:
-                return std::stod(it->second);
+                if constexpr (std::is_same_v<T, double>) return std::stod(value);
+                break;
+            case FieldType::Char: // String
             default:
-                return it->second; // Already a string
+                if constexpr (std::is_same_v<T, std::string>) return value;
+                break;
             }
         }
         catch (...) {
             return std::nullopt;
         };
+
+        // Template arg didn't match up to FieldType
+        // or parser error
+        return std::nullopt;
     };
 
-
-    static Row fromXMl(rapidxml::xml_node<>* tablerow);
 };
 
 class VOTable{
 public:
+
     // TODO: Return signature
     // Bool: Success or failure writing into `tableData`
     // Returns 0 on success, 1 on failure
-    bool load(const std::string& filename);
+    bool load(const std::filesystem::path& filename);
+
+    const std::vector<Row>& getTableData() { return tableData; };
+
     void printTable();
 
 private:
-    
-
-
-    std::unique_ptr<rapidxml::file<>> xmlFile_;
-    std::unique_ptr<rapidxml::xml_document<>> doc_;
 
     std::vector<Row> tableData;
+
 };
 
+#endif

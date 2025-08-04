@@ -1,4 +1,7 @@
+#ifndef _ASTROALGORITHMS_
+#define _ASTROALGORITHMS_
 #pragma once
+
 #include <cstdint>
 #include <tuple>
 #include <string>
@@ -63,3 +66,5 @@ double topocentric_astronomers_azimuth(double jd);
 inline double topocentric_azimuth(double jd) {
 	return fmod(topocentric_astronomers_azimuth(jd) + 180.0, 360.0);
 }
+
+#endif

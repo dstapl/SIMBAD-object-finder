@@ -4,10 +4,11 @@
 #include "file_reading.h"
 
 #include <iostream>
+#include <filesystem>
 
-
+const size_t NUM_FIELD_HEADERS = 246;
 // Hopefully both lists contain the same keys since processed in vim
-const char* FIELD_HEADERS[246] = {
+const char* FIELD_HEADERS[NUM_FIELD_HEADERS] = {
     // IDs
     "TYPED_ID",
     "MATCHING_ID",
@@ -283,24 +284,6 @@ const char* FIELD_HEADERS[246] = {
 };
 
 
-
-
-// TODO: Static or put in header file
-//	Would have to include rapidxml.hpp again though
-static std::unique_ptr<rapidxml::xml_document<>> load_xml_file(const std::string& filename) {
-    // Instantiate file
-    auto xmlFile = std::make_unique<rapidxml::file<>>(filename.c_str());
-
-    // TODO: Any validation?
-
-    // Load file onto the heap
-    auto doc = std::make_unique<rapidxml::xml_document<>>();
-
-    // Parse the XML data
-    doc->parse<0>(xmlFile->data());
-    return doc;
-};
-
 // Find first child node with a given name
 static rapidxml::xml_node<>* find_child(rapidxml::xml_node<>* parent, const char* name) {
 	for (rapidxml::xml_node<>* node = parent ? parent->first_node() : nullptr; node; node = node->next_sibling()) {
@@ -310,69 +293,67 @@ static rapidxml::xml_node<>* find_child(rapidxml::xml_node<>* parent, const char
 	return nullptr;
 }
 
-
-Row Row::fromXMl(rapidxml::xml_node<>* tablerow) {
-	Row row;
+Row::Row(rapidxml::xml_node<>* tablerow) {
 	size_t fieldIndex = 0;
 
-	// Access the global FIELD_HEADERS array
-	extern const char* FIELD_HEADERS[246];
-
 	for (rapidxml::xml_node<>* td = tablerow ? tablerow->first_node("TD") : nullptr;
-		td && fieldIndex < 246;
+		td && fieldIndex < NUM_FIELD_HEADERS;
 		td = td->next_sibling("TD"), ++fieldIndex)
 	{
 		std::string value = td->value();
 		// If TD is empty keep map key-value unset
-		if (value == "") continue;
+		if (value.empty()) continue;
 
-		row.fields[FIELD_HEADERS[fieldIndex]] = value;
+		fields[FIELD_HEADERS[fieldIndex]] = value;
 	}
-
-
-	return row;
 };
 
-bool VOTable::load(const std::string& filename) {
-	xmlFile_ = std::make_unique<rapidxml::file<>>(filename.c_str());
-	doc_ = std::make_unique<rapidxml::xml_document<>>();
-	doc_->parse<0>(xmlFile_->data());
+bool VOTable::load(const std::filesystem::path& filepath) {
+    if (!std::filesystem::exists(filepath) ||
+        !std::filesystem::is_regular_file(filepath))
+        return false;
+
+    // Create filestream
+    uintmax_t size = std::filesystem::file_size(filepath);
+    std::ifstream inFile(filepath, std::ios::binary);
+    if (!inFile) return false;
+
+    auto xmlFile = rapidxml::file<>(inFile);
+
+    using namespace rapidxml;
+
+    // Pre-allocates 64kb on heap by initialising alone
+    auto doc = std::make_unique< xml_document<> >();
+    doc->parse<0>(xmlFile.data()); // Parses *entire* DOM
 
 
-	using namespace rapidxml;
-	// Find the TABLEDATA node
-	xml_node<>* tabledata = find_child(
-		find_child(
-			find_child(
-				find_child(
-					doc_->first_node("VOTABLE"),
-					"RESOURCE"
-				),
-				"TABLE"
-			),
-			"DATA"
-		),
-		"TABLEDATA"
-	);
-	if (!tabledata) return 1;
+    // Find the TABLEDATA node
+    xml_node<>* td = find_child(
+        find_child(
+            find_child(
+                find_child(
+                    doc->first_node("VOTABLE"),
+                    "RESOURCE"
+                ),
+                "TABLE"
+            ),
+            "DATA"
+        ),
+        "TABLEDATA"
+    );
+    if (!td) return 1;
 
 
-	// Populate tableData with parsed rows
-	tableData.clear();
-	for (xml_node<>* pRow = tabledata->first_node("TR"); pRow; pRow = pRow->next_sibling("TR")) {
-		tableData.push_back(Row::fromXMl(pRow));
-	}
+    // Populate tableData with parsed rows
+    tableData.clear();
+    // TODO: Estimate row count and reserve? Probably at least 100 rows.
+    for (xml_node<>* tr = td->first_node("TR"); tr; tr = tr->next_sibling("TR")) {
+        // emplace_back? or push_back?
+        tableData.emplace_back(tr);
+    }
 
-
-
-	// Delete xml doc memory and unique_ptr
-	doc_.reset();
-	xmlFile_.reset();
-
-	return 0;
+    return 0;
 };
-
-
 
 void VOTable::printTable() {
     for (const auto& row : tableData) {

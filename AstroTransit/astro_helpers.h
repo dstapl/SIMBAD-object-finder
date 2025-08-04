@@ -1,4 +1,7 @@
+#ifndef _ASTROHELPERS_
+#define _ASTROHELPERS
 #pragma once
+
 #include <cstdint>
 #include <tuple>
 #include <string>
@@ -102,3 +105,4 @@ uint32_t hours_to_deg(dms_type dms);
 // Format: "deg° min' sec\"" or "hour h min m sec s"
 std::string dms_to_string(dms_type dms, AngleFormat format = AngleFormat::DMS);
 
+#endif
