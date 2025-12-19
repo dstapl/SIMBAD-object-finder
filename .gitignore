@@ -1,0 +1,6 @@
+!src
+!*/*.gitkeep
+
+*.o
+*.exe
+*.xml
