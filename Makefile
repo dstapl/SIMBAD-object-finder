@@ -15,8 +15,12 @@ OBJ_FILES := $(patsubst $(SRC_DIR)/%.c,$(OBJ_DIR)/%.o,$(SRCS))
 
 HFILES := $(wildcard $(SRC_DIR)/*.h)
 
-INCLDIR ?= 
-CFLAGS ?= -g -Wall -Wextra -Werror
+INCLDIR ?= include
+LIBDIR ?= lib
+INCLFLAGS ?= $(INCLDIR:%=-I%) $(LIBDIR:%=-L%)
+
+CSTD ?= c99
+CFLAGS ?= -g -std=$(CSTD) -Wall -Wextra -Werror $(INCLFLAGS)
 
 
 # Make rules
@@ -24,6 +28,8 @@ all: $(NAME)
 
 $(NAME): $(OBJ_FILES)
 	$(CC) $(CFLAGS) -o $@ $^
+
+$(NAME).exe: $(NAME)
 
 # Compile .c from src to .o in build
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c $(HFILES) | $(OBJ_DIR)

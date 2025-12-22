@@ -49,4 +49,6 @@ void layec_vector_maybe_expand(void** vector_ref, long long element_size, long l
 #define vector_free_all(V, F) do { if (V) { for (long long vector_index = 0; vector_index < vector_count(V); vector_index++) F((V)[vector_index]); memset(V, 0, (unsigned long long)vector_count(V) * (sizeof *(V))); free(vector_get_header(V)); (V) = NULL; } } while (0)
 
 
+#define vector_extend(V, ...) do { typeof(*(V)) temp_list[] = {__VA_ARGS__}; for (size_t i = 0; i < sizeof(temp_list)/sizeof(temp_list[0]); i++) { vector_push(V, temp_list[i]); }; } while (0)
+
 #endif

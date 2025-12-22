@@ -1,6 +1,8 @@
 !src
 !*/*.gitkeep
 
+compile_commands.json*
+
 *.o
 *.exe
 *.xml
