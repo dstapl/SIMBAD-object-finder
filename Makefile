@@ -15,8 +15,14 @@ OBJ_FILES := $(patsubst $(SRC_DIR)/%.c,$(OBJ_DIR)/%.o,$(SRCS))
 
 HFILES := $(wildcard $(SRC_DIR)/*.h)
 
-INCLDIR ?= include
-LIBDIR ?= lib
+# Only include libxml*/include?
+# See https://github.com/servo/libexpat/blob/main/expat/win32/README.txt
+EXPAT_DIR = lib/expat-2.7.3
+SQLITE_DIR = lib/sqlite-3.51.1
+
+INCLDIR ?= include $(EXPAT_DIR)/src/lib $(SQLITE_DIR)
+LIBDIR ?= $(EXPAT_DIR)/lib $(SQLITE_DIR)
+LINKFILES ?= expat sqlite3
 INCLFLAGS ?= $(INCLDIR:%=-I%) $(LIBDIR:%=-L%)
 
 CSTD ?= c99
@@ -27,13 +33,13 @@ CFLAGS ?= -g -std=$(CSTD) -Wall -Wextra -Werror $(INCLFLAGS)
 all: $(NAME)
 
 $(NAME): $(OBJ_FILES)
-	$(CC) $(CFLAGS) -o $@ $^
+	$(CC) $(CFLAGS) -o $@ $^ $(LINKFILES:%=-l%)
 
 $(NAME).exe: $(NAME)
 
 # Compile .c from src to .o in build
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c $(HFILES) | $(OBJ_DIR)
-	$(CC) $(CFLAGS) -c $< -o $@
+	$(CC) $(CFLAGS) -c $< -o $@ $(LINKFILES:%=-l%)
 
 # Ensure build directory exists
 $(OBJ_DIR):

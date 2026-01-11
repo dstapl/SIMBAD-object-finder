@@ -3,8 +3,6 @@
 #ifndef _VECTOR_
 #define _VECTOR_
 
-#include <stdlib.h>
-
 /// Header data for a light-weight implelentation of typed vectors.
 typedef struct {
     long long capacity;
@@ -16,30 +14,7 @@ void layec_vector_maybe_expand(void** vector_ref, long long element_size, long l
 
 #define vector_get_header(V) (((layec_vector_header*)(V)) - 1)
 
-void layec_vector_maybe_expand(void** vector_ref, long long element_size, long long required_count)
-{
-    if (required_count <= 0) return;
-    
-    layec_vector_header* header = vector_get_header(*vector_ref);
-    if (!*vector_ref)
-    {
-        long long initial_capacity = 32;
-        void* new_data = malloc((sizeof *header) + (unsigned long long)(initial_capacity * element_size));
-        header = (layec_vector_header*)new_data;
-
-        header->capacity = initial_capacity;
-        header->count = 0;
-
-    }
-    else if (required_count > header->capacity)
-    {
-        while (required_count > header->capacity)
-            header->capacity *= 2;
-        header = (layec_vector_header*)realloc(header, (sizeof *header) + (unsigned long long)(header->capacity * element_size));
-    }
-    
-    *vector_ref = (void*)(header + 1);
-}
+void layec_vector_maybe_expand(void** vector_ref, long long element_size, long long required_count);
 
 #define vector(T) T*
 #define vector_count(V) ((V) ? vector_get_header(V)->count : 0)

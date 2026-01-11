@@ -3,59 +3,37 @@
 #ifndef _HASHMAP_
 #define _HASHMAP_
 
+
 #include <stdlib.h>
 #include <assert.h>
 
 typedef struct { size_t size; size_t cap; void **buckets; } Map;
 
 // FNV1a
-const size_t BASE = 0x811c9dc5;
-const size_t PRIME = 0x01000193;
-size_t map_key_hash(Map *m, const char *str) {
-    size_t initial = BASE;
-    while(*str) {
-        initial ^= *str++;
-        initial *= PRIME;
-    }
-    return initial & (m->cap - 1);
-}
+extern const size_t BASE;
+extern const size_t PRIME;
+size_t map_key_hash(Map *m, const char *str);
 
-Map map_init(size_t cap) {
-    Map m = {0,cap, NULL};
-    m.buckets = malloc(sizeof(void*)*m.cap);
-    assert((m.buckets != NULL) && "Get more RAM");
-    return m;
-}
+Map map_init(size_t cap);
 
-int map_deinit(Map *m) {
-	assert(m != NULL);
-	assert((m->buckets != NULL) && "Buckets are not allocated");
-	
-	free(m->buckets);
-	m->buckets = NULL;
-	m->size = 0;
-	m->cap = 0;
+int map_deinit(Map *m);
 
-	return 0;
-}
+void map_put(Map *m, const char *str, void *value);
 
-void map_put(Map *m, const char *str, void *value) {
-    m->size++;
-    m->buckets[map_key_hash(m, str)] = value;
-}
-
-void* map_get(Map *m, const char *str) {
-	assert((m->buckets != NULL) && "Buckets are not allocated");
-    return m->buckets[map_key_hash(m, str)];
-}
+void* map_get(Map *m, const char *str);
 
 
-void* map_get_safe(Map *m, const char *str) {
-	if (m->buckets == NULL) {
-		return NULL;
-	}
+void* map_get_safe(Map *m, const char *str);
 
-	return map_get(m, str);
-}
+
+typedef struct {
+    void *key;
+    void *value;
+} Map_KV;
+
+typedef void (*MapKVFn)(const void *key, void *value, void *extra);
+
+// Pass in extra data from the call site if needed
+void map_iter(Map *m, MapKVFn fn, void *extra);
 
 #endif
